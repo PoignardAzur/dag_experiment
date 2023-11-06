@@ -3,5 +3,5 @@
 mod graph;
 mod operation;
 
-pub use graph::{Graph, GraphCache};
+pub use graph::Graph;
 pub use operation::{Operable, Operation, OperationId};
