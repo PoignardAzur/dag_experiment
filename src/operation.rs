@@ -1,6 +1,14 @@
 use std::num::NonZeroUsize;
 use std::panic::RefUnwindSafe;
 
+pub trait Operable: RefUnwindSafe {
+    fn compute_dyn(&self, compute_child: &mut dyn FnMut(OperationId) -> f32) -> f32;
+
+    fn compute(&self, compute_child: &mut impl FnMut(OperationId) -> f32) -> f32
+    where
+        Self: Sized;
+}
+
 pub enum Operation {
     Leaf(f32),
     Sum(OperationId, OperationId),
@@ -13,12 +21,10 @@ pub enum Operation {
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct OperationId(pub(crate) NonZeroUsize);
 
-pub trait Operable: RefUnwindSafe {
-    fn compute_dyn(&self, compute_child: &mut dyn FnMut(OperationId) -> f32) -> f32;
-
-    fn compute(&self, compute_child: &mut impl FnMut(OperationId) -> f32) -> f32
-    where
-        Self: Sized;
+impl Operation {
+    pub fn new_custom(inner: impl Operable + 'static) -> Self {
+        Operation::Custom(Box::new(inner))
+    }
 }
 
 impl Operable for Operation {

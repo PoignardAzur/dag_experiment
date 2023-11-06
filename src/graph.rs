@@ -81,6 +81,8 @@ impl Default for Graph {
 mod tests {
     use super::*;
 
+    // TODO - write expected value as operations (eg 42.0 * 10.0 + 3.0 etc)
+
     #[test]
     fn single_node() {
         let mut graph = Graph::new();
