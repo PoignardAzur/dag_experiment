@@ -1,8 +1,6 @@
 use std::num::NonZeroUsize;
 use std::panic::RefUnwindSafe;
 
-use crate::{Graph, GraphCache};
-
 pub enum Operation {
     Leaf(f32),
     Sum(OperationId, OperationId),
@@ -16,26 +14,29 @@ pub enum Operation {
 pub struct OperationId(pub(crate) NonZeroUsize);
 
 pub trait Operable: RefUnwindSafe {
-    fn compute(&self, graph: &Graph, cache: &mut GraphCache) -> f32;
+    fn compute_dyn(&self, compute_child: &mut dyn FnMut(OperationId) -> f32) -> f32;
+
+    fn compute(&self, compute_child: &mut impl FnMut(OperationId) -> f32) -> f32
+    where
+        Self: Sized;
 }
 
 impl Operable for Operation {
-    fn compute(&self, graph: &Graph, cache: &mut GraphCache) -> f32 {
+    fn compute_dyn(&self, mut compute_child: &mut dyn FnMut(OperationId) -> f32) -> f32 {
+        self.compute(&mut compute_child)
+    }
+
+    fn compute(&self, compute_child: &mut impl FnMut(OperationId) -> f32) -> f32
+    where
+        Self: Sized,
+    {
         match self {
             Operation::Leaf(value) => *value,
-            Operation::Sum(id1, id2) => {
-                graph.compute_from_root(cache, *id1) + graph.compute_from_root(cache, *id2)
-            }
-            Operation::Diff(id1, id2) => {
-                graph.compute_from_root(cache, *id1) - graph.compute_from_root(cache, *id2)
-            }
-            Operation::Product(id1, id2) => {
-                graph.compute_from_root(cache, *id1) * graph.compute_from_root(cache, *id2)
-            }
-            Operation::Div(id1, id2) => {
-                graph.compute_from_root(cache, *id1) / graph.compute_from_root(cache, *id2)
-            }
-            Operation::Custom(node) => node.compute(graph, cache),
+            Operation::Sum(id1, id2) => compute_child(*id1) + compute_child(*id2),
+            Operation::Diff(id1, id2) => compute_child(*id1) - compute_child(*id2),
+            Operation::Product(id1, id2) => compute_child(*id1) * compute_child(*id2),
+            Operation::Div(id1, id2) => compute_child(*id1) / compute_child(*id2),
+            Operation::Custom(node) => node.compute_dyn(compute_child),
         }
     }
 }

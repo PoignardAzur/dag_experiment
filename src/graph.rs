@@ -48,7 +48,7 @@ impl Graph {
             }
         }
 
-        let value = operation.compute(self, cache);
+        let value = operation.compute(&mut |id| self.compute_from_root(cache, id));
 
         if *cached {
             cache.cache.insert(id, value);
