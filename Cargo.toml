@@ -1,11 +1,14 @@
 [package]
+edition = "2021"
 name = "dag_experiment"
 version = "0.1.0"
-edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
+js-sys = "0.3.65"
+wasm-bindgen = "0.2.74"
 
 [dev-dependencies]
 insta = "1.34.0"
