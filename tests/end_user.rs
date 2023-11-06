@@ -12,10 +12,21 @@ impl Operable for MyOperation {
         let MyOperation(id1, id2) = self;
         compute_child(*id1) * 10.0 + compute_child(*id2) * 3.0
     }
+
+    fn debug_string(&self) -> String {
+        "x, y -> x * 10 + y * 3".into()
+    }
+
+    fn debug_children(&self) -> Vec<OperationId> {
+        let MyOperation(id1, id2) = self;
+        vec![*id1, *id2]
+    }
 }
 
 #[test]
 fn basic_tree() {
+    use insta::assert_display_snapshot;
+
     let mut graph = Graph::new();
     let id_1 = graph.add_op(Operation::Leaf(42.0));
     let id_2 = graph.add_op(Operation::Leaf(10.0));
@@ -27,4 +38,5 @@ fn basic_tree() {
         graph.compute_from_root(id_product),
         (42.0 + 10.0) * 10.0 + 2.0 * 3.0
     );
+    assert_display_snapshot!(graph.get_debug_tree(id_product));
 }

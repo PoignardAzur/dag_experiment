@@ -1,0 +1,10 @@
+---
+source: tests/end_user.rs
+assertion_line: 41
+expression: graph.get_debug_tree(id_product)
+---
+x, y -> x * 10 + y * 3
+| x, y -> x + y
+| | 42
+| | 10
+| 2

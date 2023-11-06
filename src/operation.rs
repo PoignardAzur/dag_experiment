@@ -7,6 +7,9 @@ pub trait Operable: RefUnwindSafe {
     fn compute(&self, compute_child: &mut impl FnMut(OperationId) -> f32) -> f32
     where
         Self: Sized;
+
+    fn debug_string(&self) -> String;
+    fn debug_children(&self) -> Vec<OperationId>;
 }
 
 pub enum Operation {
@@ -43,6 +46,28 @@ impl Operable for Operation {
             Operation::Product(id1, id2) => compute_child(*id1) * compute_child(*id2),
             Operation::Div(id1, id2) => compute_child(*id1) / compute_child(*id2),
             Operation::Custom(node) => node.compute_dyn(compute_child),
+        }
+    }
+
+    fn debug_string(&self) -> String {
+        match self {
+            Operation::Leaf(value) => value.to_string(),
+            Operation::Sum(_, _) => "x, y -> x + y".into(),
+            Operation::Diff(_, _) => "x, y -> x - y".into(),
+            Operation::Product(_, _) => "x, y -> x * y".into(),
+            Operation::Div(_, _) => "x, y -> x / y".into(),
+            Operation::Custom(node) => node.debug_string(),
+        }
+    }
+
+    fn debug_children(&self) -> Vec<OperationId> {
+        match self {
+            Operation::Leaf(_) => Vec::new(),
+            Operation::Sum(id1, id2) => vec![*id1, *id2],
+            Operation::Diff(id1, id2) => vec![*id1, *id2],
+            Operation::Product(id1, id2) => vec![*id1, *id2],
+            Operation::Div(id1, id2) => vec![*id1, *id2],
+            Operation::Custom(node) => node.debug_children(),
         }
     }
 }

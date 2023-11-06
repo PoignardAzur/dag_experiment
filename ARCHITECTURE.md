@@ -14,3 +14,4 @@
 - The implementation adds a degree of indirection for Leaf values which isn't ideal for performance. But performance isn't mentioned in requirements.
 - There's some question of how we handle mutability with the cache. We can make any method retrieving a value require a mutable reference, but it creates thorny lifetime problems. I suspect having a separate cache passed by argument will be much simpler.
 - In unit tests, I should probably have written expected value as operations (eg 42.0 * 10.0 + 3.0 etc). Oh well.
+- I'm implementing step 6 ahead of step 5, since I expect I'll have time to do step 5, and step 6 lets me stay in Rust and should be fairly short.

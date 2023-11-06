@@ -13,4 +13,8 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
+# Insta files
+*.snap.new
+
+# Not meant to be published
 REQUIREMENTS.md

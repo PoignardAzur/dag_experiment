@@ -9,7 +9,7 @@ pub struct Graph {
 }
 
 pub(crate) struct GraphInner {
-    pub(crate) values: HashMap<OperationId, (Operation, bool)>,
+    pub(crate) nodes: HashMap<OperationId, (Operation, bool)>,
     pub(crate) id_counter: NonZeroUsize,
 }
 
@@ -17,7 +17,7 @@ impl Graph {
     pub fn new() -> Self {
         Self {
             inner: GraphInner {
-                values: Default::default(),
+                nodes: Default::default(),
                 id_counter: 1.try_into().unwrap(),
             },
             cache: Default::default(),
@@ -28,7 +28,7 @@ impl Graph {
         let id = OperationId(self.inner.id_counter);
         // Note - panics on overflow
         self.inner.id_counter = self.inner.id_counter.checked_add(1).unwrap();
-        self.inner.values.insert(id, (op, false));
+        self.inner.nodes.insert(id, (op, false));
         id
     }
 
@@ -36,12 +36,26 @@ impl Graph {
         let id = OperationId(self.inner.id_counter);
         // Note - panics on overflow
         self.inner.id_counter = self.inner.id_counter.checked_add(1).unwrap();
-        self.inner.values.insert(id, (op, true));
+        self.inner.nodes.insert(id, (op, true));
         id
     }
 
     pub fn cached_value(&self, id: OperationId) -> Option<f32> {
         self.cache.get(&id).map(|ptr| *ptr)
+    }
+
+    pub fn get_debug_tree(&self, id: OperationId) -> String {
+        fn visit(lines: &mut Vec<String>, graph: &GraphInner, id: OperationId, level: usize) {
+            let (node, _) = graph.nodes.get(&id).unwrap();
+            lines.push("| ".repeat(level) + &node.debug_string());
+            for child in node.debug_children() {
+                visit(lines, graph, child, level + 1);
+            }
+        }
+
+        let mut lines = vec![];
+        visit(&mut lines, &self.inner, id, 0);
+        lines.join("\n")
     }
 
     pub fn compute_from_root(&mut self, id: OperationId) -> f32 {
@@ -51,7 +65,7 @@ impl Graph {
 
 impl GraphInner {
     pub fn compute_from_root(&self, cache: &mut HashMap<OperationId, f32>, id: OperationId) -> f32 {
-        let (operation, cached) = self.values.get(&id).unwrap();
+        let (operation, cached) = self.nodes.get(&id).unwrap();
 
         // This isn't the cleanest way to write this, but lifetime issues
         // force us to bend the code a little
@@ -79,6 +93,8 @@ impl Default for Graph {
 
 #[cfg(test)]
 mod tests {
+    use insta::assert_display_snapshot;
+
     use super::*;
 
     // TODO - write expected value as operations (eg 42.0 * 10.0 + 3.0 etc)
@@ -131,4 +147,19 @@ mod tests {
         assert_eq!(graph.cached_value(id_sum), Some(52.0));
         assert_eq!(graph.cached_value(id_product), None);
     }
+
+    #[test]
+    fn debug_representation() {
+        let mut graph = Graph::new();
+        let id_1 = graph.add_op(Operation::Leaf(48.0));
+        let id_2 = graph.add_op(Operation::Leaf(10.0));
+        let id_sum = graph.add_op(Operation::Sum(id_1, id_2));
+        let id_3 = graph.add_op(Operation::Leaf(8.0));
+        let id_diff = graph.add_op(Operation::Diff(id_sum, id_3));
+        let id_product = graph.add_op(Operation::Product(id_diff, id_2));
+
+        assert_display_snapshot!(graph.get_debug_tree(id_product));
+    }
+
+    // TODO - Handle debug representation for DAGs
 }

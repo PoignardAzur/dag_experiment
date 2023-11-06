@@ -1,0 +1,12 @@
+---
+source: src/graph.rs
+assertion_line: 161
+expression: graph.get_debug_tree(id_product)
+---
+x, y -> x * y
+| x, y -> x - y
+| | x, y -> x + y
+| | | 48
+| | | 10
+| | 8
+| 10
