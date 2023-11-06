@@ -86,6 +86,10 @@ impl GraphCache {
             cache: Default::default(),
         }
     }
+
+    fn cached_value(&self, id: OperationId) -> Option<f32> {
+        self.cache.get(&id).map(|ptr| *ptr)
+    }
 }
 
 impl Default for GraphCache {
@@ -160,4 +164,19 @@ mod tests {
     }
 
     // FIXME - Handle NaN values
+
+    #[test]
+    fn operation_cache() {
+        let mut graph = Graph::new();
+        let mut cache = GraphCache::new();
+        let id_1 = graph.add_op(Operation::Leaf(42.0));
+        let id_2 = graph.add_op(Operation::Leaf(10.0));
+        let id_sum = graph.add_cached_op(Operation::Sum(id_1, id_2));
+        let id_3 = graph.add_op(Operation::Leaf(2.0));
+        let id_product = graph.add_op(Operation::Product(id_sum, id_3));
+
+        graph.compute_from_root(&mut cache, id_product);
+        assert_eq!(cache.cached_value(id_sum), Some(52.0));
+        assert_eq!(cache.cached_value(id_product), None);
+    }
 }
