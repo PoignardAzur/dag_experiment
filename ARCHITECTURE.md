@@ -11,3 +11,5 @@
 
 - Not sure how cycles will be caught? Shouldn't be a problem if the graph is append-only.
 - How to handle eg division by zero? Try to catcha panic, but f32 creates NaN, I think. Not sure how to handle that.
+- The implementation adds a degree of indirection for Leaf values which isn't ideal for performance. But performance isn't mentioned in requirements.
+- There's some question of how we handle mutability with the cache. We can make any method retrieving a value require a mutable reference, but it creates thorny lifetime problems. I suspect having a separate cache passed by argument will be much simpler.
